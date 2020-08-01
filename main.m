@@ -6,13 +6,14 @@ format long;
 % | 0.1     | ZhouXY | 20.02.12 | The init version
 % | 0.2     | ZhouXY | 20.07.03 | Reconstruct the model for compatbility
 % | 0.3     | ZhouXY | 20.07.09 | add gap filling
+% | 1.0     | ZhouXY | 20.07.31 | Modify model structure, commit to github
 % TODO: put the parameters outside function but main function
 %test version is used for testing center fitting in time series
 %% 
 
 tic;
 % Parameters
-frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure3/';
+frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure2/';
 result_path = '/Users/apple/Desktop/TrackMaster/TestResult/';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
