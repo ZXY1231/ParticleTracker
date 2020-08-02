@@ -23,7 +23,7 @@ all_images_bright_particles = cell(1,size( all_images,1));
 all_images_dim_particles = cell(1,size(all_images,1));
 
 high_threshold = 2;
-low_threshold = 1;
+low_threshold = 1.5;
 gap_max = 6;
 %% 
 
