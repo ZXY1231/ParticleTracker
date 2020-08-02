@@ -34,7 +34,7 @@ classdef Tracker < handle
                     find_spot(2) = i;
                 end
             end
-            if near < 9
+            if near < 16
                 particle.position_xy(end+1,[1,2]) = [next_x,next_y];
                 find_spot(1) = true;
             else
