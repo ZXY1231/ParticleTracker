@@ -13,8 +13,8 @@ format long;
 
 tic;
 % Parameters
-frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure2/';
-result_path = '/Users/apple/Desktop/TrackMaster/TestResult/';
+frames_path = 'Z:\ParticleSimulation\simul_test.tif';
+result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
 
@@ -22,9 +22,9 @@ global all_images_bright_particles all_images_dim_particles
 all_images_bright_particles = cell(1,size( all_images,1));
 all_images_dim_particles = cell(1,size(all_images,1));
 
-high_threshold = 5;
+high_threshold = 2;
 low_threshold = 1;
-gap_max = 5;
+gap_max = 6;
 %% 
 
 for i = 1:size(all_images,1)
@@ -74,7 +74,6 @@ for i = 2:time_length
             all_tracks{j}.frames(end+1) = -i;
         end
     end
-    
     new_tracks = AllNewTracks(all_tracks{end}.track_id, all_images_bright_particles{i}, i);
     all_tracks = [all_tracks new_tracks];
 
