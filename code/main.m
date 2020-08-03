@@ -13,7 +13,7 @@ format long;
 
 tic;
 % Parameters
-frames_path = 'Z:\MyGitRep\ParticleSimulation\simul_test.tif';
+frames_path = 'Z:\SimulationData\100f_16p_200pxl\simul_test.tif';
 result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
@@ -58,13 +58,13 @@ time_length = size(all_images,1);
 % include gaps
 track_num = size(all_tracks,2);
 for i = 2:time_length
-    i
     for j  = 1:size(all_tracks,2)
         %determine gap, here is a bit rundundant computation. At each time
         %point, all tracks are used for claculating gaps, including those
         %whose gaps are over gap_max.
+
         last_gap_start = find(all_tracks{j}.frames>0,1,'last');
-        if i- last_gap_start> gap_max
+        if i- all_tracks{j}.frames(last_gap_start)> gap_max
             continue
         end
         find_spot = TrackFindNext(all_tracks{j}, all_images_bright_particles{i}, all_images_dim_particles{i}, i);
