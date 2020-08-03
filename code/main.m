@@ -13,7 +13,7 @@ format long;
 
 tic;
 % Parameters
-frames_path = 'Z:\ParticleSimulation\simul_test.tif';
+frames_path = 'Z:\MyGitRep\ParticleSimulation\simul_test.tif';
 result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
