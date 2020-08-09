@@ -13,7 +13,7 @@ format long;
 
 tic;
 % Parameters
-frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure2/';
+frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure3/';
 result_path = '/Users/apple/Desktop/TrackMaster/TestResult/';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
