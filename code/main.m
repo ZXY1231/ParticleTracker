@@ -13,8 +13,8 @@ format long;
 
 tic;
 % Parameters
-frames_path = '/Users/apple/Desktop/TrackMaster/TestFigure3/';
-result_path = '/Users/apple/Desktop/TrackMaster/TestResult/';
+frames_path = 'Z:\SimulationData\100f_16p_200pxl\simul_test.tif';
+result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
 
@@ -22,9 +22,9 @@ global all_images_bright_particles all_images_dim_particles
 all_images_bright_particles = cell(1,size( all_images,1));
 all_images_dim_particles = cell(1,size(all_images,1));
 
-high_threshold = 5;
-low_threshold = 1;
-gap_max = 5;
+high_threshold = 2;
+low_threshold = 1.5;
+gap_max = 6;
 %% 
 
 for i = 1:size(all_images,1)
@@ -58,13 +58,13 @@ time_length = size(all_images,1);
 % include gaps
 track_num = size(all_tracks,2);
 for i = 2:time_length
-    i
     for j  = 1:size(all_tracks,2)
         %determine gap, here is a bit rundundant computation. At each time
         %point, all tracks are used for claculating gaps, including those
         %whose gaps are over gap_max.
+
         last_gap_start = find(all_tracks{j}.frames>0,1,'last');
-        if i- last_gap_start> gap_max
+        if i- all_tracks{j}.frames(last_gap_start)> gap_max
             continue
         end
         find_spot = TrackFindNext(all_tracks{j}, all_images_bright_particles{i}, all_images_dim_particles{i}, i);
@@ -74,7 +74,6 @@ for i = 2:time_length
             all_tracks{j}.frames(end+1) = -i;
         end
     end
-    
     new_tracks = AllNewTracks(all_tracks{end}.track_id, all_images_bright_particles{i}, i);
     all_tracks = [all_tracks new_tracks];
 

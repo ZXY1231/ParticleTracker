@@ -5,4 +5,4 @@ function img_log = LogImage(image)
                                        
     img_log = imfilter(img, Log_filter, 'symmetric', 'conv');
  
-end
+end 

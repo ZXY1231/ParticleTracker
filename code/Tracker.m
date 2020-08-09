@@ -20,7 +20,7 @@ classdef Tracker < handle
       
         function find_spot = FindNext(particle,all_next_spots)
             find_spot = [false -1];
-            post_leng = length(all_next_spots);
+            post_leng = size(all_next_spots,1);
             x = particle.position_xy(end,1);
             y = particle.position_xy(end,2);
             
@@ -34,7 +34,7 @@ classdef Tracker < handle
                     find_spot(2) = i;
                 end
             end
-            if near < 9
+            if near < 25
                 particle.position_xy(end+1,[1,2]) = [next_x,next_y];
                 find_spot(1) = true;
             else
@@ -46,7 +46,7 @@ classdef Tracker < handle
         %use fun ParticleVelocity here.
         function find_spot = FindNextDim(particle,all_next_spots)
             find_spot = [false -1];
-            post_leng = length(all_next_spots);
+            post_leng = size(all_next_spots,1);
             
             %velocity = ParticleVelocity(particle);
             velocity = PolynomialPredict(particle);
@@ -63,7 +63,7 @@ classdef Tracker < handle
                     find_spot(2) = i;
                 end
             end
-            if near < 9
+            if near < 25
                 particle.position_xy(end+1,[1,2]) = [next_x,next_y];
                 find_spot(1) = true;
             else
