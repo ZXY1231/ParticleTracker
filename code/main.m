@@ -13,7 +13,7 @@ format long;
 
 tic;
 % Parameters
-frames_path = 'Z:\SimulationData\100f_16p_200pxl\simul_test.tif';
+frames_path = 'Z:\SimulationData\20200805\100f_8p_200pxl\simul_test.tif';
 result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
@@ -24,7 +24,7 @@ all_images_dim_particles = cell(1,size(all_images,1));
 
 high_threshold = 2;
 low_threshold = 1.5;
-gap_max = 6;
+gap_max = 5;
 %% 
 
 for i = 1:size(all_images,1)
@@ -40,7 +40,8 @@ end
 %% add usage flag to all detected spots in all frames
 all_images_bright_particles = AllSpotsAddFlags(all_images_bright_particles);
 all_images_dim_particles = AllSpotsAddFlags(all_images_dim_particles);
-
+%%exclude particles in all_images_dim_particles which appear in brall_images_bright_particlesight
+all_images_dim_particles = MutualExcludeBrightDim(all_images_bright_particles, all_images_dim_particles, 1);
 %%  
 %Initialize trackers with bright spots in the first frame here
 
