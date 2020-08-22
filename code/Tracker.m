@@ -49,8 +49,8 @@ classdef Tracker < handle
             post_leng = size(all_next_spots,1);
             
             %velocity = ParticleVelocity(particle);
-            velocity = PolynomialPredict(particle);
-            
+%             velocity = PolynomialPredict(particle);
+            velocity = [0,0];
             x = particle.position_xy(end,1) + velocity(1);
             y = particle.position_xy(end,2) + velocity(2);
             near = 9999999;
