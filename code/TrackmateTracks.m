@@ -1,9 +1,9 @@
-function all_trackmate_tracks = TrackmateTracks(tracks_filename_csv)
+function all_trackmate_tracks = TrackmateTracks(trackmate_filename_csv)
 % %function name: describtion 
 % %Input    a              : 
 % %         b              : 
 % %Output:  c              :
-    tracks_table = readtable(tracks_filename_csv);
+    tracks_table = readtable(trackmate_filename_csv);
     trackmate_tracks(:,1)= tracks_table.TRACK_ID+1;
     trackmate_tracks(:,2)= tracks_table.POSITION_X; % x
     trackmate_tracks(:,3)= tracks_table.POSITION_Y; % y
