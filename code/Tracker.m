@@ -4,6 +4,7 @@ classdef Tracker < handle
         position_xy
         quality
         frames
+        my_patterns
     end
     methods
        
@@ -12,6 +13,7 @@ classdef Tracker < handle
             particle.quality = quality;
             particle.position_xy = position_xy;
             particle.frames = frames;
+            particle.my_patterns = [];
         end
         
         function particle = BlinlingDetector(particle)
@@ -102,8 +104,183 @@ classdef Tracker < handle
                 velocity = velocity + 0.5^(leng-2)*(previous_xy(2,:)-previous_xy(1,:));
                 %velocity = velocity + previous_xy(end,:);             
             end
+        end
+        
+        %retrieve particle's pattern
+        function pattern = MyPattern(particle, all_full_images, n, region)
+        %MyPattern: return pattern of the particle, (averaged over the last n patterns)
+        %Input    particle                : tracker, refer to Tracker function particle = Tracker(track_id,position_xy,quality,frames)
+        %          
+        %         all_full_images         : array, size (#frames,h,w), 
+        %         n                       : int, the parttern is average over the last n frame from the current time
+        %         region                  : w*h array, pattern range = x-h/2+1:x+h/2, y-w/2+1:y+w/2, x, y is position in particle.position_xy
+        %Output:  pattern                 : has the same size with region
+            %
+            pattern = zeros(size(region));
+            h = size(region,1);
+            w = size(region,2);
+            image_size = size(squeeze(all_full_images(1,:,:)));
+            xxs = ceil(particle.position_xy(:,2));%pay attention to here xy
+            yys = ceil(particle.position_xy(:,1));
+            t = 0;
+            
+            while t < n && t < size(particle.position_xy,1)
+                t_frame = particle.frames(end-t);
+                if t_frame<0
+                    t = t+1;
+                    n = n+1; 
+                    continue
+                end
 
-end
+                x = xxs(end-t,1);
+                y = yys(end-t,1);%pay attention to here xy
+                if x-h/2+1 < 0 || x+h/2 > image_size(1) || y-w/2+1 < 0 || y+w/2 > image_size(2)
+                    break;
+                end
+                
+                image = squeeze(all_full_images(t_frame,:,:));
+                pattern = pattern + image(x-h/2+1:x+h/2, y-w/2+1:y+w/2);
+                t = t + 1;
+                
+            end
+            pattern = pattern.*region/n;
+            
+        end
+        
+        %retrieve particle's pattern
+        function pattern = MyPattern2(particle, all_full_images, n, region)
+        %MyPattern: return pattern of the particle, (averaged over the first n patterns) 
+        %Input    particle                : tracker, refer to Tracker function particle = Tracker(track_id,position_xy,quality,frames)         
+        %         all_full_images         : array, size (#frames,h,w), 
+        %         n                       : int, the parttern is average over the first n frames from start
+        %         region                  : w*h array, pattern range = x-h/2+1:x+h/2, y-w/2+1:y+w/2, x, y is position in particle.position_xy
+        %Output:  pattern                 : has the same size with region
+            pattern = zeros(size(region));
+            h = size(region,1);
+            w = size(region,2);
+            image_size = size(squeeze(all_full_images(1,:,:)));
+            xxs = ceil(particle.position_xy(:,2));%pay attention to here xy
+            yys = ceil(particle.position_xy(:,1));
+            t = 1;
+            
+            while t < n && t < size(particle.position_xy,1)
+                t_frame = particle.frames(t);
+                if t_frame<0
+                    t = t+1;
+                    n = n+1; 
+                    continue
+                end
+
+                x = xxs(t,1);
+                y = yys(t,1);%pay attention to here xy
+                if x-h/2+1 < 0 || x+h/2 > image_size(1) || y-w/2+1 < 0 || y+w/2 > image_size(2)
+                    break;
+                end
+                
+                image = squeeze(all_full_images(t_frame,:,:));
+                pattern = pattern + image(x-h/2+1:x+h/2, y-w/2+1:y+w/2);
+                t = t + 1;
+                
+            end
+            pattern = pattern.*region/n;
+            
+        end
+        
+        function position_z = EstimateZ(particle,particle_pattern,a,b) 
+        %EstimateZ: return z estimation of the particle
+        %Input    particle                : tracker, refer to Tracker function particle = Tracker(track_id,position_xy,quality,frames)         
+        %         particle_pattern        : parttern of the pattern,
+        %         a                       : experimental parameter
+        %         b                       : experimental parameter
+        %Output:  position_z              : double, z position
+        %         |     yunlei            | 20200824
+        %         paper reference: Three-dimensional localization microscopy in live flowing cells
+            if nargin<3
+                a = 2343.4;
+                b = 820.7;
+            end
+
+            H = size(particle_pattern,1);
+            W = size(particle_pattern,2);
+            [X, Y] = meshgrid(1:H, 1:W);
+            X_fit = X-(H-1)/2;
+            Y_fit = Y-(W-1)/2;
+            XY(:,:,1)=X_fit;
+            XY(:,:,2)=Y_fit;
+
+            func = @(var,x) (var(1)*exp(-(x(:,:,1)-var(2)).^2/(2*var(4)^2)-(x(:,:,2)-var(3)).^2/(2*var(5)^2)));  
+            try
+                options = optimset('MaxFunEvals',100000,'MaxIter',100000);
+                result = lsqcurvefit(func,[1,0,0,1,1],XY,particle_pattern,[],[],options);
+                position_z = a*log(result(4)/result(5)) + b;
+
+            catch
+
+            end
+            particle.position_xy(end,4) = position_z;
+        end
+        
+        function SavePatterns(particle, all_full_images, region, filename)
+            if nargin < 4
+                particle.track_id
+                filename = ['Id_' num2str(particle.track_id) '_Patterns'];
+            end
+            
+            patterns = zeros([size(particle.position_xy,1) size(region)]);
+            h = size(region,1);
+            w = size(region,2);
+            image_size = size(squeeze(all_full_images(1,:,:)));
+            xxs = ceil(particle.position_xy(:,2));%pay attention to here xy
+            yys = ceil(particle.position_xy(:,1));
+            
+            for t = 1:size(particle.position_xy,1)
+                t_frame = abs(particle.frames(t));
+                x = xxs(t,1);
+                y = yys(t,1);%pay attention to here xy
+                if x-h/2+1 < 0 || x+h/2 > image_size(1) || y-w/2+1 < 0 || y+w/2 > image_size(2)
+                    break;
+                end
+                
+                image = squeeze(all_full_images(t_frame,:,:));
+                patterns(t,:,:) = image(x-h/2+1:x+h/2, y-w/2+1:y+w/2);
+                
+            end
+            
+            for i = 1:size(patterns, 1)
+                if max(patterns(i,:,:))==0
+                    patterns(i,:,:) = [];
+                end
+            end
+            
+            for i = 1:size(patterns,1)
+                i 
+                pattern = squeeze(patterns(i,:,:));
+                if i==1, imwrite(uint16(pattern), [filename, '.tif'], 'tiff', 'Compression', 'none')
+                else, imwrite(uint16(pattern), [filename, '.tif'], 'tiff', 'Compression', 'none', 'WriteMode', 'append')
+                end
+            end 
+        end
+        
+        function SavePatterns2(particle, filename)
+            %save 
+            if nargin < 2
+                particle.track_id
+                filename = ['Id_' num2str(particle.track_id) '_Patterns'];
+            end
+            
+            for i = 1:size(particle.my_patterns,1)
+                i 
+                pattern = squeeze(particle.my_patterns(i,:,:));
+                if i==1, imwrite(uint16(pattern), [filename, '.tif'], 'tiff', 'Compression', 'none')
+                else, imwrite(uint16(pattern), [filename, '.tif'], 'tiff', 'Compression', 'none', 'WriteMode', 'append')
+                end
+            end
+            
+        end
+
+
+        
+        
         
         
     end
