@@ -1,4 +1,4 @@
-clear all;
+% clear all;
 format long;
 % Main function
 % Matlab is pass-by-value.
@@ -9,12 +9,19 @@ format long;
 % | 1.0     | ZhouXY | 20.07.31 | Modify model structure, commit to github
 % TODO: put the parameters outside function but main function
 %test version is used for testing center fitting in time series
-%% 
-
+%% % Parameters
 tic;
-% Parameters
-frames_path = 'Z:\SimulationData\20200805\100f_8p_200pxl\simul_test.tif';
-result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
+frames_path = 'C:\Users\ZXY\Desktop\ASU\Lab\DivisionTrack\Z_estimation_examples_yunlei\20200817_Copy\data\2umPSNP20Xdilu\1_short2\';
+% result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
+
+high_threshold = 10;
+low_threshold = 10;
+gap_max = 5;
+img_smooth_n = 5;
+do_z_estimation = false;
+
+
+%% load images and initialize filter operated images, detected particles
 all_images = LoadImages(frames_path);% size (#frames,h,w)
 log_images = zeros(size(all_images));
 
@@ -22,20 +29,18 @@ global all_images_bright_particles all_images_dim_particles
 all_images_bright_particles = cell(1,size( all_images,1));
 all_images_dim_particles = cell(1,size(all_images,1));
 
-high_threshold = 2;
-low_threshold = 1.5;
-gap_max = 5;
-%% 
-
+%% detection
+TextProgressBar('Filtering the images: ');
+leng = size(all_images,1);
 for i = 1:size(all_images,1)
-    i 
+    TextProgressBar((i/leng)*100); 
     log_img = LogImage(all_images(i,:,:));
     log_images(i,:,:) = log_img;
     
     all_images_bright_particles(i) = {IdentifySpots(log_img, high_threshold)};
-    all_images_dim_particles(i) = {IdentifySpots(log_img, low_threshold)};
+    all_images_dim_particles(i) = {IdentifySpots(log_img , low_threshold)};
 end
-
+TextProgressBar('Done ');
 
 %% add usage flag to all detected spots in all frames
 all_images_bright_particles = AllSpotsAddFlags(all_images_bright_particles);
@@ -46,6 +51,9 @@ all_images_dim_particles = MutualExcludeBrightDim(all_images_bright_particles, a
 %Initialize trackers with bright spots in the first frame here
 
 all_tracks = TrackerInitializaon(all_images_bright_particles{1});
+all_images_bright_particles{1} = TracksId2Spots(all_tracks, all_images_bright_particles{1});
+%% label spots which are closed to each other
+all_closed_spots_labels = ClosedSpotsLabel(all_images_bright_particles,15); 
 
 %% link detected spots between frames
 
@@ -58,7 +66,9 @@ time_length = size(all_images,1);
 
 % include gaps
 track_num = size(all_tracks,2);
+TextProgressBar('Linking and estimation: ');
 for i = 2:time_length
+    TextProgressBar((i/time_length)*100); 
     for j  = 1:size(all_tracks,2)
         %determine gap, here is a bit rundundant computation. At each time
         %point, all tracks are used for claculating gaps, including those
@@ -69,16 +79,70 @@ for i = 2:time_length
             continue
         end
         find_spot = TrackFindNext(all_tracks{j}, all_images_bright_particles{i}, all_images_dim_particles{i}, i);
+         
         if find_spot(1)
             all_tracks{j}.frames(end+1) = i;
+            
+            if do_z_estimation
+                %estimate z position of the particle
+                %all_tracks{j}.EstimateZ(all_tracks{j}.MyPattern(all_images, 1, ones(20)));
+                all_tracks{j}.my_patterns(end+1,:,:) = all_tracks{j}.MyPattern(all_images, 1, ones(20));
+                all_tracks{j}.EstimateZ(squeeze(all_tracks{j}.my_patterns(end,:,:)));
+            end
+            
         else
             all_tracks{j}.frames(end+1) = -i;
         end
     end
+    
     new_tracks = AllNewTracks(all_tracks{end}.track_id, all_images_bright_particles{i}, i);
-    all_tracks = [all_tracks new_tracks];
-
+    all_images_bright_particles{i} = TracksId2Spots(new_tracks, all_images_bright_particles{i});
+    all_tracks = [all_tracks new_tracks]; 
+    
+    %     Substract near patterns to do fine Z position estimation
+    if do_z_estimation
+        for j  = 1:size(all_tracks,2)
+            if isempty(all_closed_spots_labels{i})
+            else
+                closed_spots = find(all_closed_spots_labels{i}(:,1)==all_tracks{j}.track_id);
+                closed_spots = all_closed_spots_labels{i}(closed_spots,2);
+                %close_spots is indics (in detected particles) at time i, not track ids
+                
+                bright_particles = all_images_bright_particles{i};
+                closed_spots_ids = bright_particles(closed_spots,3);% tracks ids are saved at the third colume
+                
+                img_tep = squeeze(all_images(i,:,:)); 
+                for k = 1: size(closed_spots_ids,1)
+                    if i>5
+                        pre_n = img_smooth_n;
+                    else
+                        pre_n = i;
+                    end
+                    closed_track = all_tracks{closed_spots_ids(k)};
+                    closed_pattern = closed_track.MyPattern2(all_images, pre_n, ones(20));
+                    %retain noise in the image
+                    closed_pattern = closed_pattern.*(closed_pattern>400);
+                    
+                    mid_xy = [closed_track.position_xy(end,2), closed_track.position_xy(end,1)];
+                    img_tep = ImgSub(img_tep, closed_pattern, mid_xy);
+                end
+                
+                all_images_tmp = all_images;
+                all_images_tmp(i,:,:) = img_tep;
+                try
+                    all_tracks{j}.my_patterns(end,:,:) = all_tracks{j}.MyPattern(all_images_tmp, 1, ones(20));
+                    all_tracks{j}.EstimateZ(squeeze(all_tracks{j}.my_patterns(end,:,:)));
+                catch
+                    all_tracks{j}.my_patterns(end+1,:,:) = all_tracks{j}.MyPattern(all_images_tmp, 1, ones(20));
+                    all_tracks{j}.EstimateZ(squeeze(all_tracks{j}.my_patterns(end,:,:)));
+                end
+                
+            end
+        end
+    end
+        
 end
+TextProgressBar('Done2 ');
 
 %% test module
 tracks_length = AllTracksLength(all_tracks);
