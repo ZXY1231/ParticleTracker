@@ -10,5 +10,6 @@ function all_spots = AllSpotsAddFlags(all_spots)
 % spots_with_flags = cell(size(all_spots));
     for i = 1:size(all_spots,2)
         all_spots{i}(:,end+1) = 0;
+%         all_spots{i}(:,end+1) = -1;
     end
 end
