@@ -1,6 +1,7 @@
 # Particle Tracker 
 Homemade particle tracker, for further easy extension
 ## Introduction
+![image](https://github.com/ZXY1231/ParticleTracker/blob/master/images/TrackingFlow.PNG)
 
 ## Result
 
