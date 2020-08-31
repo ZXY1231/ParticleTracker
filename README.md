@@ -2,8 +2,10 @@
 Homemade particle tracker, for further easy extension
 ## Introduction
 ![image](https://github.com/ZXY1231/ParticleTracker/blob/master/images/TrackingFlow.PNG)
-
+## Evaluation
+![image](https://github.com/ZXY1231/ParticleTracker/blob/master/images/LengthAverage.PNG)
 ## Result
+![image](https://github.com/ZXY1231/ParticleTracker/blob/master/images/LengthAverageResult.PNG)
 
 
 
