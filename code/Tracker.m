@@ -134,7 +134,9 @@ classdef Tracker < handle
 
                 x = xxs(end-t,1);
                 y = yys(end-t,1);%pay attention to here xy
-                if x-h/2+1 < 0 || x+h/2 > image_size(1) || y-w/2+1 < 0 || y+w/2 > image_size(2)
+
+                if x-h/2+1 <= 0 || x+h/2 > image_size(1) || y-w/2+1 <= 0 || y+w/2 > image_size(2)
+
                     break;
                 end
                 
@@ -173,7 +175,9 @@ classdef Tracker < handle
 
                 x = xxs(t,1);
                 y = yys(t,1);%pay attention to here xy
-                if x-h/2+1 < 0 || x+h/2 > image_size(1) || y-w/2+1 < 0 || y+w/2 > image_size(2)
+
+                if x-h/2+1 <= 0 || x+h/2 > image_size(1) || y-w/2+1 <= 0 || y+w/2 > image_size(2)
+
                     break;
                 end
                 
@@ -186,6 +190,56 @@ classdef Tracker < handle
             
         end
         
+
+        function pattern = MyFastPattern(particle, one_image, region)
+        %MyPattern: return pattern of the particle, (averaged over the first n patterns) 
+        %Input    particle                : tracker, refer to Tracker function particle = Tracker(track_id,position_xy,quality,frames)         
+        %         all_full_images         : array, size (#frames,h,w), 
+        %         n                       : int, the parttern is average over the first n frames from start
+        %         region                  : w*h array, pattern range = x-h/2+1:x+h/2, y-w/2+1:y+w/2, x, y is position in particle.position_xy
+        %Output:  pattern                 : has the same size with region
+            pattern = zeros(size(region));
+            h = size(region,1);
+            w = size(region,2);
+            image_size = size(one_image);
+            xxs = ceil(particle.position_xy(:,2));%pay attention to here xy
+            yys = ceil(particle.position_xy(:,1));
+            x = xxs(end,1);
+            y = yys(end,1);%pay attention to here xy
+            if x-h/2+1 <= 0 || x+h/2 > image_size(1) || y-w/2+1 <= 0 || y+w/2 > image_size(2)
+%                pass
+            else
+                image = one_image;
+                pattern = pattern + image(x-h/2+1:x+h/2, y-w/2+1:y+w/2);
+            end
+            
+        end
+        
+        function pattern = MyPatternVideo(particle, all_full_images, t1, t2, region)
+   
+            %
+            pattern = zeros([size(region),t2-t1+1]);
+            h = size(region,1);
+            w = size(region,2);
+            image_size = size(squeeze(all_full_images(1,:,:)));
+            xxs = ceil(particle.position_xy(:,2));%pay attention to here xy
+            yys = ceil(particle.position_xy(:,1));
+            for i = t1:t2
+                t_frame = abs(particle.frames(i));
+                x = xxs(i,1);
+                y = yys(i,1);%pay attention to here xy
+                if x-h/2+1 <= 0 || x+h/2 > image_size(1) || y-w/2+1 <= 0 || y+w/2 > image_size(2)
+                    break;
+                end
+
+                image = squeeze(all_full_images(t_frame,:,:));
+                pattern(:,:,i-t1+1) = image(x-h/2+1:x+h/2, y-w/2+1:y+w/2);
+
+            end
+            
+        end
+        
+
         function position_z = EstimateZ(particle,particle_pattern,a,b) 
         %EstimateZ: return z estimation of the particle
         %Input    particle                : tracker, refer to Tracker function particle = Tracker(track_id,position_xy,quality,frames)         

@@ -7,16 +7,16 @@ format long;
 % | 0.2     | ZhouXY | 20.07.03 | Reconstruct the model for compatbility
 % | 0.3     | ZhouXY | 20.07.09 | add gap filling
 % | 1.0     | ZhouXY | 20.07.31 | Modify model structure, commit to github
+% | 1.1     | ZhouXY | 21.01.12 | Start to restructure the model
 % TODO: put the parameters outside function but main function
 %test version is used for testing center fitting in time series
-%% % Parameters
+%% Parameters
 tic;
-frames_path = 'C:\Users\ZXY\Desktop\ASU\Lab\DivisionTrack\Z_estimation_examples_yunlei\20200817_Copy\data\2umPSNP20Xdilu\1_short2\';
-% result_path = 'C:\Users\ZXY\OneDrive\Desktop\ASU\Lab\DivisionTrack\Track_master\TestFigureTestResult\';
+frames_path = '/Users/zxy/Desktop/20210108/500nm_1_1_1ms/';
 
 high_threshold = 10;
 low_threshold = 10;
-gap_max = 5;
+gap_max = 5; 
 img_smooth_n = 5;
 do_z_estimation = false;
 
